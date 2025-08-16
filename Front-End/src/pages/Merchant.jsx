@@ -1,21 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { createDecoder } from '../lib/decoder'
+import StatusPill from '../components/StatusPill'
+import LogPanel from '../components/LogPanel'
 
 export default function Merchant() {
-  const [status, setStatus] = useState('idle') // idle | listening | decoding | success | error
+  const [status, setStatus] = useState('idle')
   const [log, setLog] = useState([])
   const [token, setToken] = useState('')
+
   const mediaStreamRef = useRef(null)
   const audioCtxRef = useRef(null)
   const analyserRef = useRef(null)
   const decoderRef = useRef(null)
 
-  function pushLog(msg) {
-    setLog(l => [msg, ...l].slice(0, 50))
-  }
+  const pushLog = (msg) => setLog(l => [msg, ...l].slice(0, 50))
 
-  async function startListening() {
+  const startListening = async () => {
     try {
       setStatus('listening')
       pushLog('Requesting microphone...')
@@ -33,12 +34,12 @@ export default function Merchant() {
       decoderRef.current = createDecoder({
         analyser: analyserRef.current,
         audioCtx: audioCtxRef.current,
-        onLog: (m) => pushLog(m),
+        onLog: pushLog,
         onToken: async (decodedToken) => {
           pushLog('Decoded token: ' + decodedToken)
           setToken(decodedToken)
           try {
-            const res = await axios.post('/api/payments/verify', { token: decodedToken })
+            await axios.post('/api/payments/verify', { token: decodedToken })
             setStatus('success')
             pushLog('Payment verified successfully.')
           } catch (err) {
@@ -54,12 +55,10 @@ export default function Merchant() {
     }
   }
 
-  function stopListening() {
+  const stopListening = () => {
     if (decoderRef.current) decoderRef.current.stop()
     if (audioCtxRef.current) audioCtxRef.current.close()
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop())
-    }
+    if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop())
     setStatus('idle')
     pushLog('Stopped listening.')
   }
@@ -74,9 +73,7 @@ export default function Merchant() {
           {status === 'listening' || status === 'decoding' ? 'Listening…' : 'Start Listening'}
         </button>
         <button className="px-4 py-2 rounded bg-gray-300" onClick={stopListening}>Stop</button>
-        <span className={`px-3 py-2 rounded text-sm ${status==='success'? 'bg-green-100 text-green-700': status==='error'? 'bg-red-100 text-red-700':'bg-gray-100'}`}>
-          Status: {status}
-        </span>
+        <StatusPill status={status} />
       </div>
 
       {token && (
@@ -86,12 +83,7 @@ export default function Merchant() {
         </div>
       )}
 
-      <div className="p-3 rounded bg-gray-50 border border-gray-200">
-        <div className="text-sm opacity-70 mb-2">Log</div>
-        <ul className="text-xs space-y-1">
-          {log.map((m, i) => <li key={i}>• {m}</li>)}
-        </ul>
-      </div>
+      <LogPanel log={log} />
     </div>
   )
 }
