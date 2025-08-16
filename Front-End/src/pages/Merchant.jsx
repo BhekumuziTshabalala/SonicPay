@@ -5,6 +5,7 @@ import StatusPill from '../components/StatusPill'
 import LogPanel from '../components/LogPanel'
 import TransactionTable from '../components/TransactionTable'
 import { AuthContext } from '../context/AuthContext'
+import useSSE from '../hooks/useSSE'
 
 export default function Merchant() {
   const { user } = useContext(AuthContext)
@@ -33,6 +34,12 @@ export default function Merchant() {
 
   useEffect(() => { fetchHistory() }, [user])
 
+  // SSE real-time updates
+  useSSE(user ? `/api/payments/stream?userId=${user.id}` : null, (payment) => {
+    pushLog(`New payment received: ${payment.amount} from ${payment.customerId}`)
+    setTransactions(prev => [payment, ...prev].slice(0, 50))
+  })
+
   const startListening = async () => {
     try {
       setStatus('listening')
@@ -59,7 +66,7 @@ export default function Merchant() {
             await axios.post('/api/payments/verify', { token: decodedToken })
             pushLog('Payment verified successfully.')
             setStatus('success')
-            fetchHistory() // Refresh transaction table
+            fetchHistory()
           } catch (err) {
             setStatus('error')
             pushLog('Payment verification failed: ' + err.message)

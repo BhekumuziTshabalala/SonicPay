@@ -4,8 +4,9 @@ import { createEmitter } from '../lib/emitter'
 import StatusPill from '../components/StatusPill'
 import LogPanel from '../components/LogPanel'
 import TransactionTable from '../components/TransactionTable'
-import { QRCodeCanvas } from "qrcode.react"; // new API
+import { QRCodeCanvas } from "qrcode.react";
 import { AuthContext } from '../context/AuthContext'
+import useSSE from '../hooks/useSSE'
 
 export default function Customer() {
   const { user } = useContext(AuthContext)
@@ -34,6 +35,12 @@ export default function Customer() {
   }
 
   useEffect(() => { fetchHistory() }, [user])
+
+  // SSE real-time updates
+  useSSE(user ? `/api/payments/stream?userId=${user.id}` : null, (payment) => {
+    pushLog(`Payment confirmed: ${payment.amount} to ${payment.merchantId}`)
+    setTransactions(prev => [payment, ...prev].slice(0, 50))
+  })
 
   async function generateToken() {
     if (!amount || !merchantId) {
