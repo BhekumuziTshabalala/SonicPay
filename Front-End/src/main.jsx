@@ -10,6 +10,18 @@ import RoleSelect from './pages/RoleSelect.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import Navbar from './components/Navbar.jsx'
 import AdminGate from './components/AdminGate.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
+import { ToastProvider } from './contexts/ToastContext.jsx'
+
+// start MSW in dev if available
+if (typeof window !== 'undefined' && import.meta.env && import.meta.env.DEV) {
+  try {
+    // dynamic import so MSW can be optional
+    import('./mocks/browser').then(({ worker }) => {
+      if (worker && worker.start) worker.start({ onUnhandledRequest: 'bypass' }).catch(e => console.error('MSW start failed:', e))
+    }).catch(e => { /* ignore if not installed */ })
+  } catch (e) { console.warn('MSW init failed:', e) }
+}
 
 function AppWrapper() {
   const [unlocked, setUnlocked] = useState(false)
@@ -22,22 +34,26 @@ function AppWrapper() {
   }, [])
 
   return (
-    <AuthProvider>
-      {!unlocked && <AdminGate onAuthenticate={() => setUnlocked(true)} />}
-      <BrowserRouter>
-        <div className="app-container">
-          <Navbar />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/role-select" element={<RoleSelect />} />
-            <Route path="/merchant" element={<Merchant />} />
-            <Route path="/customer" element={<Customer />} />
-            <Route path="*" element={<Login />} />
-          </Routes>
-        </div>
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <AuthProvider>
+          {!unlocked && <AdminGate onAuthenticate={() => setUnlocked(true)} />}
+          <BrowserRouter>
+            <div className="app-container">
+              <Navbar />
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/role-select" element={<RoleSelect />} />
+                <Route path="/merchant" element={<Merchant />} />
+                <Route path="/customer" element={<Customer />} />
+                <Route path="*" element={<Login />} />
+              </Routes>
+            </div>
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   )
 }
 

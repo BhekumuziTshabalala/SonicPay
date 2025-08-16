@@ -1,6 +1,7 @@
 import React from 'react'
 
 export default function TransactionTable({ transactions }) {
+  const rows = Array.isArray(transactions) ? transactions : []
   return (
     <table className="min-w-full border border-gray-200 rounded overflow-hidden text-sm">
       <thead className="bg-gray-100">
@@ -12,12 +13,12 @@ export default function TransactionTable({ transactions }) {
         </tr>
       </thead>
       <tbody>
-        {transactions.map((tx, i) => (
+        {rows.map((tx, i) => (
           <tr key={i} className="even:bg-gray-50">
-            <td className="p-2 border-b">{new Date(tx.timestamp).toLocaleString()}</td>
-            <td className="p-2 border-b">{tx.party}</td>
-            <td className="p-2 border-b">{tx.amount}</td>
-            <td className="p-2 border-b">{tx.status}</td>
+            <td className="p-2 border-b">{(() => { try { return tx && tx.timestamp ? new Date(tx.timestamp).toLocaleString() : '-' } catch(e) { return '-' } })()}</td>
+            <td className="p-2 border-b">{tx?.party ?? '-'}</td>
+            <td className="p-2 border-b">{tx?.amount ?? '-'}</td>
+            <td className="p-2 border-b">{tx?.status ?? '-'}</td>
           </tr>
         ))}
       </tbody>

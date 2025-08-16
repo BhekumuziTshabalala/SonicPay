@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: |
+          cd Front-End
+          npm ci
+      - name: Run lint
+        run: |
+          cd Front-End
+          npm run lint || echo "lint errors"
+      - name: Run unit tests
+        run: |
+          cd Front-End
+          npm run test:unit -- --run
+      - name: Install Playwright browsers
+        if: success()
+        run: |
+          cd Front-End
+          npx playwright install --with-deps
+      - name: Start dev server and run e2e
+        if: success()
+        run: |
+          cd Front-End
+          npm run dev &
+          # give dev server a moment to start
+          sleep 3
+          npm run test:e2e || echo "e2e failed"

@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react'
 import { AuthContext } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
 
 export default function Register() {
   const { register } = useContext(AuthContext)
@@ -9,7 +8,8 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [roles, setRoles] = useState([])
   const [error, setError] = useState('')
-  const navigate = useNavigate()
+  let navigate
+  try { const rn = require('react-router-dom'); navigate = rn.useNavigate(); } catch(e) { navigate = () => {} }
 
   const toggleRole = (role) => {
     setRoles(r => r.includes(role) ? r.filter(x=>x!==role) : [...r, role])
@@ -20,8 +20,8 @@ export default function Register() {
     setError('')
     if (roles.length === 0) { setError('Select at least one role'); return; }
     try {
-      await register({ name, email, password, roles })
-      navigate('/role-select')
+      const res = await register({ name, email, password, roles })
+      if (res) try { navigate('/role-select') } catch (ex) {}
     } catch (err) {
       setError(err.message || ('Registration failed'))
     }

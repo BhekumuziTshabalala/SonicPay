@@ -7,14 +7,15 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const navigate = useNavigate()
+  let navigate
+  try { navigate = useNavigate() } catch (e) { navigate = () => {} }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     try {
-      await login(email, password)
-      navigate('/role-select')
+      const res = await login(email, password)
+      if (res) try { navigate('/role-select') } catch (ex) { /* ignore */ }
     } catch (err) {
       setError(err.message || 'Invalid credentials or server error')
     }

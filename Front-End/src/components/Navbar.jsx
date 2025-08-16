@@ -4,6 +4,20 @@ import { AuthContext } from '../context/AuthContext'
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext)
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (e) {
+      console.error('Logout error:', e)
+    }
+  }
+
+  const lockApp = () => {
+    try { localStorage.removeItem('sonicpay.adminUnlocked') } catch (e) {}
+    try { window.location.reload() } catch (e) {}
+  }
+
   return (
     <div className="glass navbar">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -19,7 +33,8 @@ export default function Navbar() {
         ) : (
           <>
             <Link to="/role-select">Portal</Link>
-            <button onClick={() => logout()} className="btn secondary">Sign out</button>
+            <button onClick={handleLogout} className="btn secondary">Sign out</button>
+            <button onClick={lockApp} className="btn secondary" title="Lock app and require admin unlock on next load">Lock App</button>
           </>
         )}
       </div>

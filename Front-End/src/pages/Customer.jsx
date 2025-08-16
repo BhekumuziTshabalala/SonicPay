@@ -28,7 +28,8 @@ export default function Customer() {
     if (!user) return
     try {
       const res = await axios.get(`/api/payments/history?userId=${user.id}`)
-      setTransactions(res.data)
+      // Ensure we always store an array (backend may return null/object)
+      setTransactions(Array.isArray(res.data) ? res.data : [])
     } catch (err) {
       pushLog('Failed to fetch transactions: ' + err.message)
     }
@@ -39,7 +40,8 @@ export default function Customer() {
   // SSE real-time updates
   useSSE(user ? `/api/payments/stream?userId=${user.id}` : null, (payment) => {
     pushLog(`Payment confirmed: ${payment.amount} to ${payment.merchantId}`)
-    setTransactions(prev => [payment, ...prev].slice(0, 50))
+    // Guard previous value in case it's not an array
+    setTransactions(prev => [payment, ...(Array.isArray(prev) ? prev : [])].slice(0, 50))
   })
 
   async function generateToken() {
@@ -142,7 +144,7 @@ export default function Customer() {
 
       <div className="glass" style={{ padding: '1rem' }}>
         <h2 className="text-xl font-semibold mt-2 mb-2">Transaction History</h2>
-        <TransactionTable transactions={transactions.map(tx => ({
+        <TransactionTable transactions={(Array.isArray(transactions) ? transactions : []).map(tx => ({
           ...tx,
           party: tx.merchantId
         }))} />

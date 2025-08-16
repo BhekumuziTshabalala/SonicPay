@@ -26,9 +26,9 @@ export default function Merchant() {
     if (!user) return
     try {
       const res = await axios.get(`/api/payments/history?userId=${user.id}`)
-      setTransactions(res.data)
+      setTransactions(Array.isArray(res.data) ? res.data : [])
     } catch (err) {
-      pushLog('Failed to fetch transactions: ' + err.message)
+      pushLog('Failed to fetch transactions: ' + (err?.message || String(err)))
     }
   }
 
@@ -36,16 +36,33 @@ export default function Merchant() {
 
   // SSE real-time updates
   useSSE(user ? `/api/payments/stream?userId=${user.id}` : null, (payment) => {
-    pushLog(`New payment received: ${payment.amount} from ${payment.customerId}`)
-    setTransactions(prev => [payment, ...prev].slice(0, 50))
+    try {
+      pushLog(`New payment received: ${payment.amount} from ${payment.customerId}`)
+      setTransactions(prev => [payment, ...prev].slice(0, 50))
+    } catch (e) {
+      console.error('SSE message handler failed:', e)
+    }
   })
 
   const startListening = async () => {
+    if (!navigator?.mediaDevices?.getUserMedia) {
+      pushLog('Microphone API not available in this browser')
+      setStatus('error')
+      return
+    }
+
     try {
       setStatus('listening')
       pushLog('Requesting microphone...')
       mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true })
-      audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)()
+      try {
+        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)()
+      } catch (aErr) {
+        pushLog('AudioContext not available: ' + (aErr?.message || String(aErr)))
+        setStatus('error')
+        return
+      }
+
       const src = audioCtxRef.current.createMediaStreamSource(mediaStreamRef.current)
       analyserRef.current = audioCtxRef.current.createAnalyser()
       analyserRef.current.fftSize = 4096
@@ -69,21 +86,23 @@ export default function Merchant() {
             fetchHistory()
           } catch (err) {
             setStatus('error')
-            pushLog('Payment verification failed: ' + err.message)
+            pushLog('Payment verification failed: ' + (err?.message || String(err)))
           }
         }
       })
 
     } catch (e) {
       setStatus('error')
-      pushLog('Microphone access failed: ' + e.message)
+      pushLog('Microphone access failed: ' + (e?.message || String(e)))
     }
   }
 
   const stopListening = () => {
-    if (decoderRef.current) decoderRef.current.stop()
-    if (audioCtxRef.current) audioCtxRef.current.close()
-    if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop())
+    try {
+      if (decoderRef.current && typeof decoderRef.current.stop === 'function') decoderRef.current.stop()
+    } catch (e) { console.error('Decoder stop failed:', e) }
+    try { if (audioCtxRef.current && typeof audioCtxRef.current.close === 'function') audioCtxRef.current.close() } catch (e) { console.error('AudioContext close failed:', e) }
+    try { if (mediaStreamRef.current && mediaStreamRef.current.getTracks) mediaStreamRef.current.getTracks().forEach(t => { try { t.stop() } catch(_){} }) } catch (e) { console.error('Stopping tracks failed:', e) }
     setStatus('idle')
     pushLog('Stopped listening.')
   }
