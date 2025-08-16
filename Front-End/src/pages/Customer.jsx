@@ -112,39 +112,41 @@ export default function Customer() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2">SonicPay – Customer</h1>
-      <p className="opacity-80 mb-4">Generate ultrasonic payment tokens and send to merchants.</p>
+    <div>
+      <div className="glass" style={{ padding: '1.25rem', marginBottom: '1rem' }}>
+        <h1 className="text-2xl font-bold mb-2">SonicPay – Customer</h1>
+        <p className="text-muted mb-4">Generate ultrasonic payment tokens and send to merchants.</p>
 
-      <div className="flex flex-col gap-3 mb-4">
-        <input type="number" placeholder="Amount" value={amount} onChange={e=>setAmount(e.target.value)}
-               className="border p-2 rounded" />
-        <input type="text" placeholder="Merchant ID" value={merchantId} onChange={e=>setMerchantId(e.target.value)}
-               className="border p-2 rounded" />
-        <div className="flex gap-3">
-          <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={generateToken}>Generate Token</button>
-          <button className="px-4 py-2 rounded bg-black text-white" onClick={startEmit}>Emit Sound</button>
-          <button className="px-4 py-2 rounded bg-gray-300" onClick={stopEmit}>Stop</button>
-          <button className="px-4 py-2 rounded bg-green-200" onClick={showQR}>Show QR</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <input type="number" placeholder="Amount" value={amount} onChange={e=>setAmount(e.target.value)} />
+          <input type="text" placeholder="Merchant ID" value={merchantId} onChange={e=>setMerchantId(e.target.value)} />
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button className="btn" onClick={generateToken}>Generate Token</button>
+            <button className="btn" onClick={startEmit}>Emit Sound</button>
+            <button className="btn secondary" onClick={stopEmit}>Stop</button>
+            <button className="btn secondary" onClick={showQR}>Show QR</button>
+          </div>
         </div>
+
+        <StatusPill status={status} />
+
+        {token && qrVisible && (
+          <div className="" style={{ padding: '1rem', borderRadius: 8, background: '#f0fff7', border: '1px solid #e1f6ea', marginTop: '0.75rem', textAlign: 'center' }}>
+            <div className="mb-2 text-sm text-muted">Token QR</div>
+            <QRCodeCanvas value={token} size={160} />
+          </div>
+        )}
+
+        <LogPanel log={log} />
       </div>
 
-      <StatusPill status={status} />
-
-      {token && qrVisible && (
-        <div className="p-4 rounded bg-green-50 border border-green-200 my-4 text-center">
-          <div className="mb-2 text-sm opacity-70">Token QR</div>
-          <QRCodeCanvas value={token} size={160} />
-        </div>
-      )}
-
-      <LogPanel log={log} />
-
-      <h2 className="text-xl font-semibold mt-6 mb-2">Transaction History</h2>
-      <TransactionTable transactions={transactions.map(tx => ({
-        ...tx,
-        party: tx.merchantId
-      }))} />
+      <div className="glass" style={{ padding: '1rem' }}>
+        <h2 className="text-xl font-semibold mt-2 mb-2">Transaction History</h2>
+        <TransactionTable transactions={transactions.map(tx => ({
+          ...tx,
+          party: tx.merchantId
+        }))} />
+      </div>
     </div>
   )
 }

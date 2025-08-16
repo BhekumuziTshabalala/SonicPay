@@ -11,24 +11,36 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    setError('')
     try {
       await login(email, password)
       navigate('/role-select')
     } catch (err) {
-      setError('Invalid credentials or server error')
+      setError(err.message || 'Invalid credentials or server error')
     }
   }
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Login</h2>
-      {error && <div className="mb-2 text-red-600">{error}</div>}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="border p-2 rounded" required />
-        <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="border p-2 rounded" required />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Login</button>
-      </form>
-      <p className="mt-4 text-sm">No account? <a href="/register" className="text-blue-600 hover:underline">Register</a></p>
+    <div className="app-container">
+      <div className="glass max-w-md mx-auto" style={{ padding: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <h2>Welcome back</h2>
+          <div className="text-muted">Sign in to continue</div>
+        </div>
+
+        {error && <div style={{ color: '#c0392b', marginBottom: '0.6rem' }}>{error}</div>}
+
+        <form onSubmit={handleSubmit} className="form-row">
+          <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required />
+          <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required />
+          <div className="form-actions">
+            <a href="/register" className="text-muted" style={{ marginRight: 'auto' }}>Create an account</a>
+            <button type="submit" className="btn">Sign in</button>
+          </div>
+        </form>
+
+        <div style={{ marginTop: '1rem' }} className="text-muted center">Demo admin: <strong>admin</strong> / <strong>admin</strong></div>
+      </div>
     </div>
   )
 }

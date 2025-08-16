@@ -15,26 +15,31 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function login(email, password) {
-  try {
-    const res = await axios.post('/api/auth/login', { email, password });
-    setUser(res.data);
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err.response?.data?.message || err.message };
+    try {
+      const res = await axios.post('/api/auth/login', { email, password });
+      setUser(res.data);
+      return res.data;
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Login failed'
+      throw new Error(message)
+    }
   }
-}
-
 
   async function register(data) {
-    const res = await axios.post('/api/auth/register', data)
-    setUser(res.data)
+    try {
+      const res = await axios.post('/api/auth/register', data)
+      setUser(res.data)
+      return res.data
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Registration failed'
+      throw new Error(message)
+    }
   }
 
   async function logout() {
-  setUser(null);
-  try { await axios.post('/api/auth/logout'); } catch(e) { console.error(e); }
-}
-
+    setUser(null);
+    try { await axios.post('/api/auth/logout'); } catch(e) { console.error(e); }
+  }
 
   return (
     <AuthContext.Provider value={{ user, login, register, logout, loading }}>

@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
@@ -9,12 +9,23 @@ import Register from './pages/Register.jsx'
 import RoleSelect from './pages/RoleSelect.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import Navbar from './components/Navbar.jsx'
+import AdminGate from './components/AdminGate.jsx'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+function AppWrapper() {
+  const [unlocked, setUnlocked] = useState(false)
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('sonicpay.adminUnlocked')
+      if (v === '1') setUnlocked(true)
+    } catch (e) { /* ignore */ }
+  }, [])
+
+  return (
     <AuthProvider>
+      {!unlocked && <AdminGate onAuthenticate={() => setUnlocked(true)} />}
       <BrowserRouter>
-        <div className="min-h-screen p-6 bg-gray-50">
+        <div className="app-container">
           <Navbar />
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -27,5 +38,11 @@ createRoot(document.getElementById('root')).render(
         </div>
       </BrowserRouter>
     </AuthProvider>
+  )
+}
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <AppWrapper />
   </StrictMode>,
 )

@@ -89,32 +89,39 @@ export default function Merchant() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2">SonicPay – Merchant</h1>
-      <p className="opacity-80 mb-4">Listen for ultrasonic payments and decode tokens in real time.</p>
+    <div>
+      <div className="glass" style={{ padding: '1.25rem' }}>
+        <h1 className="text-2xl font-bold mb-2">SonicPay – Merchant</h1>
+        <p className="text-muted mb-4">Listen for ultrasonic payments and decode tokens in real time.</p>
 
-      <div className="flex gap-3 mb-4">
-        <button className="px-4 py-2 rounded bg-black text-white" onClick={startListening} disabled={status==='listening' || status==='decoding'}>
-          {status === 'listening' || status === 'decoding' ? 'Listening…' : 'Start Listening'}
-        </button>
-        <button className="px-4 py-2 rounded bg-gray-300" onClick={stopListening}>Stop</button>
-        <StatusPill status={status} />
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', alignItems: 'center' }}>
+          <button className="btn" onClick={startListening} disabled={status==='listening' || status==='decoding'}>
+            {status === 'listening' || status === 'decoding' ? 'Listening…' : 'Start Listening'}
+          </button>
+          <button className="btn secondary" onClick={stopListening}>Stop</button>
+          <StatusPill status={status} />
+        </div>
+
+        {token && (
+          <div style={{ padding: '0.75rem', borderRadius: 8, background: '#e9fbf0', border: '1px solid #d1f3da', marginBottom: '0.75rem' }}>
+            <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>Decoded Token</div>
+            <pre style={{ fontSize: '0.85rem', whiteSpace: 'pre-wrap' }}>{token}</pre>
+          </div>
+        )}
+
+        <LogPanel log={log} />
+
       </div>
 
-      {token && (
-        <div className="p-3 rounded bg-green-50 border border-green-200 mb-4">
-          <div className="text-sm opacity-70">Decoded Token</div>
-          <pre className="text-xs whitespace-pre-wrap">{token}</pre>
+      <div style={{ marginTop: '1rem' }} className="glass" >
+        <h2 className="text-xl font-semibold mt-2 mb-2" style={{ padding: '1rem' }}>Transaction History</h2>
+        <div style={{ padding: '0 1rem 1rem 1rem' }}>
+          <TransactionTable transactions={transactions.map(tx => ({
+            ...tx,
+            party: tx.customerId
+          }))} />
         </div>
-      )}
-
-      <LogPanel log={log} />
-
-      <h2 className="text-xl font-semibold mt-6 mb-2">Transaction History</h2>
-      <TransactionTable transactions={transactions.map(tx => ({
-        ...tx,
-        party: tx.customerId
-      }))} />
+      </div>
     </div>
   )
 }
