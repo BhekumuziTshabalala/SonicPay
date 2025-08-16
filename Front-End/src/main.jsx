@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Merchant from './pages/Merchant.jsx'
-// import Customer from './pages/Customer.jsx'
+import Customer from './pages/Customer.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import RoleSelect from './pages/RoleSelect.jsx'
@@ -21,7 +21,7 @@ createRoot(document.getElementById('root')).render(
             <Route path="/register" element={<Register />} />
             <Route path="/role-select" element={<RoleSelect />} />
             <Route path="/merchant" element={<Merchant />} />
-            {/* <Route path="/customer" element={<Customer />} /> */}
+            <Route path="/customer" element={<Customer />} />
             <Route path="*" element={<Login />} />
           </Routes>
         </div>

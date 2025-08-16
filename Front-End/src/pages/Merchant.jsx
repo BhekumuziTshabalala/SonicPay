@@ -1,13 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useContext } from 'react'
 import axios from 'axios'
 import { createDecoder } from '../lib/decoder'
 import StatusPill from '../components/StatusPill'
 import LogPanel from '../components/LogPanel'
+import TransactionTable from '../components/TransactionTable'
+import { AuthContext } from '../context/AuthContext'
 
 export default function Merchant() {
+  const { user } = useContext(AuthContext)
   const [status, setStatus] = useState('idle')
   const [log, setLog] = useState([])
   const [token, setToken] = useState('')
+  const [transactions, setTransactions] = useState([])
 
   const mediaStreamRef = useRef(null)
   const audioCtxRef = useRef(null)
@@ -15,6 +19,19 @@ export default function Merchant() {
   const decoderRef = useRef(null)
 
   const pushLog = (msg) => setLog(l => [msg, ...l].slice(0, 50))
+
+  // Fetch transaction history
+  const fetchHistory = async () => {
+    if (!user) return
+    try {
+      const res = await axios.get(`/api/payments/history?userId=${user.id}`)
+      setTransactions(res.data)
+    } catch (err) {
+      pushLog('Failed to fetch transactions: ' + err.message)
+    }
+  }
+
+  useEffect(() => { fetchHistory() }, [user])
 
   const startListening = async () => {
     try {
@@ -40,8 +57,9 @@ export default function Merchant() {
           setToken(decodedToken)
           try {
             await axios.post('/api/payments/verify', { token: decodedToken })
-            setStatus('success')
             pushLog('Payment verified successfully.')
+            setStatus('success')
+            fetchHistory() // Refresh transaction table
           } catch (err) {
             setStatus('error')
             pushLog('Payment verification failed: ' + err.message)
@@ -64,7 +82,7 @@ export default function Merchant() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">SonicPay – Merchant</h1>
       <p className="opacity-80 mb-4">Listen for ultrasonic payments and decode tokens in real time.</p>
 
@@ -84,6 +102,12 @@ export default function Merchant() {
       )}
 
       <LogPanel log={log} />
+
+      <h2 className="text-xl font-semibold mt-6 mb-2">Transaction History</h2>
+      <TransactionTable transactions={transactions.map(tx => ({
+        ...tx,
+        party: tx.customerId
+      }))} />
     </div>
   )
 }
