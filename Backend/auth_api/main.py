@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Body , Header
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from models import Base, User, Account
-from schemas import UserRegister, UserLogin, Token, Payment
-from auth import hash_password, verify_password, create_access_token
+from schemas import UserRegister, UserLogin, Token, Payment, BalanceUpdate
+from auth import hash_password, verify_password, create_access_token, SECRET_KEY, ALGORITHM
 from datetime import timedelta
+
 
 DATABASE_URL = "sqlite:///../resources/dataStore.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -55,6 +56,18 @@ def get_balance(username: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     account = db.query(Account).filter(Account.user_id == db_user.id).first()
     return {"username": db_user.username, "balance": float(account.balance)}
+
+@app.put("/updateBalance")
+def update_balance(balance_update: BalanceUpdate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == balance_update.username).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    account = db.query(Account).filter(Account.user_id == db_user.id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+    account.balance = balance_update.new_balance
+    db.commit()
+
 
 @app.post("/pay")
 def pay(sender_username: str, payment: Payment, db: Session = Depends(get_db)):

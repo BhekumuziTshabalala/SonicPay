@@ -16,3 +16,7 @@ class Token(BaseModel):
 class Payment(BaseModel):
     receiver_username: str
     amount: float
+
+class BalanceUpdate(BaseModel):
+    username: str
+    amount: float
